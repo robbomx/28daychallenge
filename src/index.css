@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@theme {
+  /* ---- Color system: field-manual / tactical ---- */
+  --color-op-black: #0d0f0c;
+  --color-op-charcoal: #14160f;
+  --color-op-panel: #1a1d16;
+  --color-op-line: #2b2e24;
+  --color-op-olive: #4b5a2f;
+  --color-op-olive-light: #6b7d47;
+  --color-op-olive-dark: #2e3a1b;
+  --color-op-sand: #c9a876;
+  --color-op-orange: #c8551f;
+  --color-op-orange-light: #e2703a;
+  --color-op-off-white: #ece8db;
+  --color-op-off-white-dim: #b8b3a2;
+  --color-op-success: #5c8a3a;
+  --color-op-warning: #d69a2d;
+  --color-op-error: #b4382c;
+
+  --font-display: "Oswald", "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    background-color: var(--color-op-black);
+  }
+  body {
+    background-color: var(--color-op-black);
+    color: var(--color-op-off-white);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  ::selection {
+    background: var(--color-op-orange);
+    color: var(--color-op-black);
+  }
+  *:focus-visible {
+    outline: 2px solid var(--color-op-orange);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .tactical-grid-bg {
+    background-image:
+      linear-gradient(to right, rgba(236, 232, 219, 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(236, 232, 219, 0.045) 1px, transparent 1px);
+    background-size: 34px 34px;
+  }
+
+  .stencil-tracking {
+    letter-spacing: 0.06em;
+  }
+
+  .mono-label {
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .stamp-rotate {
+    transform: rotate(-6deg);
+  }
+
+  .clip-notch {
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  }
+
+  .scanline-fade {
+    -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
