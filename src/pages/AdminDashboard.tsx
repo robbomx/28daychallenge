@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
 import Button from "../components/Button";
-import { adminGetUsers, type AdminUserRow } from "../lib/api";
+import { adminGetUsers, adminResetPassword, type AdminUserRow } from "../lib/api";
 import { clearAdminToken, getAdminToken } from "../lib/storage";
 
 function daysSince(dateStr?: string): number | null {
@@ -12,10 +12,21 @@ function daysSince(dateStr?: string): number | null {
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
+function generateTempPassword(): string {
+  const words = ["ranger", "summit", "forge", "granite", "cobalt", "ember", "harbor", "quartz"];
+  const word = words[Math.floor(Math.random() * words.length)];
+  const num = Math.floor(1000 + Math.random() * 9000);
+  return `${word}${num}`;
+}
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<AdminUserRow[] | null>(null);
   const [error, setError] = useState("");
+  const [resetTarget, setResetTarget] = useState<AdminUserRow | null>(null);
+  const [resetPassword, setResetPasswordValue] = useState("");
+  const [resetStatus, setResetStatus] = useState<"idle" | "saving" | "done" | "error">("idle");
+  const [resetError, setResetError] = useState("");
 
   useEffect(() => {
     const token = getAdminToken();
@@ -54,6 +65,37 @@ export default function AdminDashboard() {
   const handleLogout = () => {
     clearAdminToken();
     navigate("/admin/login");
+  };
+
+  const openResetModal = (u: AdminUserRow) => {
+    setResetTarget(u);
+    setResetPasswordValue(generateTempPassword());
+    setResetStatus("idle");
+    setResetError("");
+  };
+
+  const closeResetModal = () => {
+    setResetTarget(null);
+    setResetStatus("idle");
+    setResetError("");
+  };
+
+  const submitReset = async () => {
+    const token = getAdminToken();
+    if (!token || !resetTarget) return;
+    if (resetPassword.length < 6) {
+      setResetError("Password must be at least 6 characters.");
+      return;
+    }
+    setResetStatus("saving");
+    setResetError("");
+    try {
+      await adminResetPassword(token, resetTarget.email, resetPassword);
+      setResetStatus("done");
+    } catch (err) {
+      setResetStatus("error");
+      setResetError(err instanceof Error ? err.message : "Failed to reset password.");
+    }
   };
 
   return (
@@ -110,19 +152,20 @@ export default function AdminDashboard() {
               <Th>Completed</Th>
               <Th>Streak</Th>
               <Th>Last Active</Th>
+              <Th>Action</Th>
             </tr>
           </thead>
           <tbody>
             {users === null && !error && (
               <tr>
-                <td colSpan={11} className="text-center py-10 text-op-off-white-dim text-xs">
+                <td colSpan={12} className="text-center py-10 text-op-off-white-dim text-xs">
                   Loading…
                 </td>
               </tr>
             )}
             {users?.length === 0 && (
               <tr>
-                <td colSpan={11} className="text-center py-10 text-op-off-white-dim text-xs">
+                <td colSpan={12} className="text-center py-10 text-op-off-white-dim text-xs">
                   No signups yet.
                 </td>
               </tr>
@@ -165,12 +208,74 @@ export default function AdminDashboard() {
                       "—"
                     )}
                   </Td>
+                  <Td>
+                    <button
+                      onClick={() => openResetModal(u)}
+                      className="mono-label text-[11px] text-op-orange hover:underline"
+                    >
+                      Reset Password
+                    </button>
+                  </Td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </Card>
+
+      {resetTarget && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center px-4 z-50"
+          onClick={closeResetModal}
+        >
+          <Card variant="panel" className="w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+            {resetStatus === "done" ? (
+              <>
+                <h3 className="font-display text-xl text-op-off-white mb-2">Password Reset</h3>
+                <p className="text-sm text-op-off-white-dim mb-4">
+                  {resetTarget.firstName}'s password has been changed. Send them this temporary password directly
+                  — they can change it themselves from Settings once they're logged back in.
+                </p>
+                <div className="bg-op-charcoal border border-op-line rounded-sm p-3 mb-4 flex items-center justify-between gap-3">
+                  <code className="text-op-orange text-sm break-all">{resetPassword}</code>
+                </div>
+                <p className="text-xs text-op-off-white-dim mb-4">Account email: {resetTarget.email}</p>
+                <Button variant="primary" fullWidth onClick={closeResetModal}>
+                  Done
+                </Button>
+              </>
+            ) : (
+              <>
+                <h3 className="font-display text-xl text-op-off-white mb-1">Reset Password</h3>
+                <p className="text-sm text-op-off-white-dim mb-4">
+                  For {resetTarget.firstName} ({resetTarget.email}). A temporary password has been generated below —
+                  you can edit it, then send it to them yourself once saved.
+                </p>
+                <div className="flex flex-col gap-1.5 mb-4">
+                  <label htmlFor="tempPassword" className="mono-label text-xs text-op-off-white-dim">
+                    New Password
+                  </label>
+                  <input
+                    id="tempPassword"
+                    value={resetPassword}
+                    onChange={(e) => setResetPasswordValue(e.target.value)}
+                    className="bg-op-charcoal border border-op-line focus:border-op-orange px-3 py-2.5 text-sm text-op-off-white rounded-sm outline-none"
+                  />
+                </div>
+                {resetError && <p className="text-sm text-op-error mb-4">{resetError}</p>}
+                <div className="flex gap-3">
+                  <Button variant="ghost" onClick={closeResetModal}>
+                    Cancel
+                  </Button>
+                  <Button variant="primary" fullWidth onClick={submitReset} disabled={resetStatus === "saving"}>
+                    {resetStatus === "saving" ? "Saving…" : "Confirm Reset"}
+                  </Button>
+                </div>
+              </>
+            )}
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

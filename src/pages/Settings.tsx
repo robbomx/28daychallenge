@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { resetChallenge, updateNotifications } from "../lib/storage";
+import { getToken, resetChallenge, updateNotifications } from "../lib/storage";
+import { changePassword } from "../lib/api";
 import { Field, SelectField } from "../components/AuthForm";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
@@ -12,6 +13,13 @@ export default function Settings() {
   const navigate = useNavigate();
   const [confirmingReset, setConfirmingReset] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSaved, setPasswordSaved] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
 
   if (!user) return null;
 
@@ -27,6 +35,40 @@ export default function Settings() {
     setUser(resetChallenge(user));
     setConfirmingReset(false);
     navigate("/dashboard");
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordError("");
+    if (!currentPassword || !newPassword) {
+      setPasswordError("Fill in both password fields.");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordError("New password must be at least 6 characters.");
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError("New passwords do not match.");
+      return;
+    }
+    const token = getToken();
+    if (!token) {
+      setPasswordError("You've been logged out. Log back in and try again.");
+      return;
+    }
+    setPasswordSaving(true);
+    try {
+      await changePassword(token, currentPassword, newPassword);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setPasswordSaved(true);
+      setTimeout(() => setPasswordSaved(false), 2500);
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : "Failed to change password.");
+    } finally {
+      setPasswordSaving(false);
+    }
   };
 
   const handleDeleteAndLogout = () => {
@@ -80,6 +122,36 @@ export default function Settings() {
         />
         <Button variant="primary" onClick={handleSaveNotifications} className="mt-2">
           {saved ? "Saved" : "Save Preferences"}
+        </Button>
+      </Card>
+
+      <Card variant="panel" className="p-6 flex flex-col gap-4 mb-8">
+        <h3 className="font-display text-lg text-op-off-white mb-1">Change Password</h3>
+        <Field
+          id="currentPassword"
+          label="Current Password"
+          type="password"
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+        />
+        <Field
+          id="newPassword"
+          label="New Password"
+          type="password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          placeholder="At least 6 characters"
+        />
+        <Field
+          id="confirmNewPassword"
+          label="Confirm New Password"
+          type="password"
+          value={confirmNewPassword}
+          onChange={(e) => setConfirmNewPassword(e.target.value)}
+        />
+        {passwordError && <p className="text-sm text-op-error">{passwordError}</p>}
+        <Button variant="primary" onClick={handleChangePassword} disabled={passwordSaving}>
+          {passwordSaving ? "Saving…" : passwordSaved ? "Password Updated" : "Change Password"}
         </Button>
       </Card>
 

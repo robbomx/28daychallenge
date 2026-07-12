@@ -156,6 +156,25 @@ app.get("/api/auth/me", authMiddleware, (req, res) => {
   res.json({ user: toPublicUser(user) });
 });
 
+app.post("/api/auth/change-password", rateLimit(10, 15 * 60 * 1000), authMiddleware, async (req, res) => {
+  const { currentPassword, newPassword } = req.body || {};
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: "Current and new password are required." });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ error: "New password must be at least 6 characters." });
+  }
+  const user = findUserById(req.userId);
+  if (!user) return res.status(404).json({ error: "User not found." });
+  const valid = await verifyPassword(currentPassword, user.passwordHash);
+  if (!valid) {
+    return res.status(401).json({ error: "Current password is incorrect." });
+  }
+  const passwordHash = await hashPassword(newPassword);
+  updateUser(user.id, { passwordHash });
+  res.json({ ok: true });
+});
+
 // Returns a personalized Stripe Payment Link for the logged-in user, so the
 // webhook can tell us who paid via client_reference_id.
 app.get("/api/checkout-link", authMiddleware, (req, res) => {
@@ -211,6 +230,27 @@ app.get("/api/admin/users", adminAuthMiddleware, (req, res) => {
     return rest;
   });
   res.json({ users });
+});
+
+// Manual password reset, used until a real self-service email flow exists.
+// The admin sets a temporary password here and relays it to the person
+// directly (e.g. by email) — they should be encouraged to change it once
+// they're back in, though there's no in-app "change password" yet either.
+app.post("/api/admin/reset-password", adminAuthMiddleware, async (req, res) => {
+  const { email, newPassword } = req.body || {};
+  if (!email || !newPassword) {
+    return res.status(400).json({ error: "Email and new password are required." });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ error: "New password must be at least 6 characters." });
+  }
+  const user = findUserByEmail(email);
+  if (!user) {
+    return res.status(404).json({ error: "No account found with that email." });
+  }
+  const passwordHash = await hashPassword(newPassword);
+  updateUser(user.id, { passwordHash });
+  res.json({ ok: true });
 });
 
 app.listen(PORT, () => {

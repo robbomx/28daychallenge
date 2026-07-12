@@ -66,6 +66,14 @@ export function getCheckoutLink(token: string) {
   });
 }
 
+export function changePassword(token: string, currentPassword: string, newPassword: string) {
+  return request<{ ok: true }>("/api/auth/change-password", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
+
 // Fire-and-forget progress summary sync, purely so the admin dashboard has
 // real numbers to show. Never awaited by the UI and never blocks a person's
 // own experience of the app if it fails.
@@ -104,5 +112,13 @@ export function adminLogin(password: string) {
 export function adminGetUsers(adminToken: string) {
   return request<{ users: AdminUserRow[] }>("/api/admin/users", {
     headers: { Authorization: `Bearer ${adminToken}` },
+  });
+}
+
+export function adminResetPassword(adminToken: string, email: string, newPassword: string) {
+  return request<{ ok: true }>("/api/admin/reset-password", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${adminToken}` },
+    body: JSON.stringify({ email, newPassword }),
   });
 }
