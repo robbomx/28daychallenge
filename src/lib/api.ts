@@ -72,6 +72,14 @@ export function changePassword(token: string, currentPassword: string, newPasswo
   });
 }
 
+export function updateProfile(token: string, updates: { fitnessLevel?: string; goal?: string }) {
+  return request<{ user: BackendUser }>("/api/auth/profile", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(updates),
+  });
+}
+
 // Fire-and-forget progress summary sync, purely so the admin dashboard has
 // real numbers to show. Never awaited by the UI and never blocks a person's
 // own experience of the app if it fails.

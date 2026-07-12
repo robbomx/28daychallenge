@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getToken, resetChallenge, updateNotifications } from "../lib/storage";
-import { changePassword } from "../lib/api";
+import { changePassword, updateProfile } from "../lib/api";
 import { Field, SelectField } from "../components/AuthForm";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
 import Button from "../components/Button";
+import type { FitnessLevel, Goal } from "../types";
 
 export default function Settings() {
   const { user, setUser, logout } = useAuth();
@@ -21,14 +22,40 @@ export default function Settings() {
   const [passwordSaved, setPasswordSaved] = useState(false);
   const [passwordSaving, setPasswordSaving] = useState(false);
 
+  const [profileError, setProfileError] = useState("");
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+
   if (!user) return null;
 
   const [notifications, setNotifications] = useState(user.notifications);
+  const [fitnessLevel, setFitnessLevel] = useState<FitnessLevel>(user.fitnessLevel);
+  const [goal, setGoal] = useState<Goal>(user.goal);
 
   const handleSaveNotifications = () => {
     setUser(updateNotifications(user, notifications));
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleSaveProfile = async () => {
+    setProfileError("");
+    const token = getToken();
+    if (!token) {
+      setProfileError("You've been logged out. Log back in and try again.");
+      return;
+    }
+    setProfileSaving(true);
+    try {
+      const { user: updated } = await updateProfile(token, { fitnessLevel, goal });
+      setUser({ ...user, fitnessLevel: updated.fitnessLevel, goal: updated.goal });
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 2000);
+    } catch (err) {
+      setProfileError(err instanceof Error ? err.message : "Failed to save changes.");
+    } finally {
+      setProfileSaving(false);
+    }
   };
 
   const handleReset = () => {
@@ -88,19 +115,34 @@ export default function Settings() {
         </div>
         <Field id="firstName" label="Name" value={user.firstName} disabled />
         <Field id="email" label="Email" type="email" value={user.email} disabled />
-        <SelectField id="fitnessLevel" label="Fitness Level" value={user.fitnessLevel} disabled>
-          <option>{user.fitnessLevel}</option>
+        <SelectField
+          id="fitnessLevel"
+          label="Fitness Level"
+          value={fitnessLevel}
+          onChange={(e) => setFitnessLevel(e.target.value as FitnessLevel)}
+        >
+          <option>Beginner</option>
+          <option>Intermediate</option>
+          <option>Advanced</option>
         </SelectField>
-        <SelectField id="goal" label="Goal" value={user.goal} disabled>
-          <option>{user.goal}</option>
+        <SelectField id="goal" label="Goal" value={goal} onChange={(e) => setGoal(e.target.value as Goal)}>
+          <option>Lose fat</option>
+          <option>Build muscle</option>
+          <option>Improve discipline</option>
+          <option>Improve fitness</option>
+          <option>Restart routine</option>
         </SelectField>
         <div>
           <p className="mono-label text-xs text-op-off-white-dim mb-1">Challenge Start Date</p>
           <p className="text-sm text-op-off-white">{new Date(user.startDate).toLocaleDateString()}</p>
         </div>
         <p className="text-xs text-op-off-white-dim">
-          Profile fields are managed by your account and aren't editable in this prototype yet.
+          Name and email aren't editable yet. Fitness level and goal can be updated below.
         </p>
+        {profileError && <p className="text-sm text-op-error">{profileError}</p>}
+        <Button variant="primary" onClick={handleSaveProfile} disabled={profileSaving}>
+          {profileSaving ? "Saving…" : profileSaved ? "Saved" : "Save Changes"}
+        </Button>
       </Card>
 
       <Card variant="panel" className="p-6 flex flex-col gap-3 mb-8">

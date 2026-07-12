@@ -169,6 +169,37 @@ app.get("/api/auth/me", authMiddleware, async (req, res) => {
   }
 });
 
+const VALID_FITNESS_LEVELS = ["Beginner", "Intermediate", "Advanced"];
+const VALID_GOALS = ["Lose fat", "Build muscle", "Improve discipline", "Improve fitness", "Restart routine"];
+
+app.post("/api/auth/profile", rateLimit(20, 15 * 60 * 1000), authMiddleware, async (req, res) => {
+  try {
+    const { fitnessLevel, goal } = req.body || {};
+    const updates = {};
+    if (fitnessLevel !== undefined) {
+      if (!VALID_FITNESS_LEVELS.includes(fitnessLevel)) {
+        return res.status(400).json({ error: "Invalid fitness level." });
+      }
+      updates.fitnessLevel = fitnessLevel;
+    }
+    if (goal !== undefined) {
+      if (!VALID_GOALS.includes(goal)) {
+        return res.status(400).json({ error: "Invalid goal." });
+      }
+      updates.goal = goal;
+    }
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: "Nothing to update." });
+    }
+    const user = await updateUser(req.userId, updates);
+    if (!user) return res.status(404).json({ error: "User not found." });
+    res.json({ user: toPublicUser(user) });
+  } catch (err) {
+    console.error("Update profile error:", err);
+    res.status(500).json({ error: "Failed to update profile." });
+  }
+});
+
 app.post("/api/auth/change-password", rateLimit(10, 15 * 60 * 1000), authMiddleware, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body || {};
