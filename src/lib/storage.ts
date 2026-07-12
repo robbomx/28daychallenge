@@ -67,11 +67,14 @@ function saveUserLocalPart(user: AppUser) {
   });
 }
 
+function toCalendarDate(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
 export function getCurrentDay(user: AppUser): number {
-  const start = new Date(user.startDate);
-  const now = new Date();
-  const diffMs = now.getTime() - start.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
+  const start = toCalendarDate(new Date(user.startDate));
+  const now = toCalendarDate(new Date());
+  const diffDays = Math.round((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
   return Math.min(Math.max(diffDays, 1), 28);
 }
 

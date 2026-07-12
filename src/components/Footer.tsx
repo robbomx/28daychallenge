@@ -12,7 +12,7 @@ export default function Footer() {
           General fitness guidance only. Not medical advice. Consult a professional before starting any new
           exercise program, especially if you have an injury or health condition.
         </p>
-        <span className="mono-label text-[11px] text-op-off-white-dim">© {new Date().getFullYear()} · Field Copy · Prototype</span>
+        <span className="mono-label text-[11px] text-op-off-white-dim">© {new Date().getFullYear()} · Field Copy</span>
       </div>
     </footer>
   );

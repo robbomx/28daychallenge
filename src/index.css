@@ -18,7 +18,7 @@
   --color-op-warning: #d69a2d;
   --color-op-error: #b4382c;
 
-  --font-display: "Oswald", "Arial Narrow", sans-serif;
+  --font-display: "Big Shoulders Display", "Arial Narrow", sans-serif;
   --font-body: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 }
@@ -35,8 +35,9 @@
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
   }
   ::selection {
     background: var(--color-op-orange);
