@@ -19,6 +19,8 @@ function generateTempPassword(): string {
   return `${word}${num}`;
 }
 
+type SortKey = "name" | "email" | "signedUp" | "day" | "completed" | "streak" | "lastActive";
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<AdminUserRow[] | null>(null);
@@ -27,6 +29,9 @@ export default function AdminDashboard() {
   const [resetPassword, setResetPasswordValue] = useState("");
   const [resetStatus, setResetStatus] = useState<"idle" | "saving" | "done" | "error">("idle");
   const [resetError, setResetError] = useState("");
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("signedUp");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
     const token = getAdminToken();
@@ -61,6 +66,51 @@ export default function AdminDashboard() {
     }).length;
     return { total, paid, active7d, stalled };
   }, [users]);
+
+  const sortValue = (u: AdminUserRow, key: SortKey): string | number => {
+    switch (key) {
+      case "name":
+        return u.firstName.toLowerCase();
+      case "email":
+        return u.email.toLowerCase();
+      case "signedUp":
+        return new Date(u.createdAt).getTime();
+      case "day":
+        return u.progressSummary?.currentDay ?? -1;
+      case "completed":
+        return u.progressSummary?.totalCompleted ?? 0;
+      case "streak":
+        return u.progressSummary?.streak ?? 0;
+      case "lastActive":
+        return u.lastActiveAt ? new Date(u.lastActiveAt).getTime() : -1;
+      default:
+        return 0;
+    }
+  };
+
+  const filteredSortedUsers = useMemo(() => {
+    if (!users) return null;
+    const q = search.trim().toLowerCase();
+    const filtered = q
+      ? users.filter((u) => u.firstName.toLowerCase().includes(q) || u.email.toLowerCase().includes(q))
+      : users;
+    const sorted = [...filtered].sort((a, b) => {
+      const av = sortValue(a, sortKey);
+      const bv = sortValue(b, sortKey);
+      const cmp = av < bv ? -1 : av > bv ? 1 : 0;
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return sorted;
+  }, [users, search, sortKey, sortDir]);
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
 
   const handleLogout = () => {
     clearAdminToken();
@@ -137,21 +187,45 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <div className="relative w-full sm:w-72">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name or email…"
+            className="w-full bg-op-panel border border-op-line focus:border-op-orange px-3 py-2 text-sm text-op-off-white rounded-sm outline-none placeholder:text-op-off-white-dim/50"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-op-off-white-dim hover:text-op-off-white text-xs"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+        {users && (
+          <span className="mono-label text-[11px] text-op-off-white-dim">
+            {filteredSortedUsers?.length ?? 0} of {users.length} shown
+          </span>
+        )}
+      </div>
+
       <Card variant="panel" className="overflow-x-auto">
         <table className="w-full text-sm min-w-[900px]">
           <thead>
             <tr className="border-b border-op-line text-left">
-              <Th>Name</Th>
-              <Th>Email</Th>
-              <Th>Signed Up</Th>
+              <SortableTh label="Name" sortKey="name" activeKey={sortKey} dir={sortDir} onClick={toggleSort} />
+              <SortableTh label="Email" sortKey="email" activeKey={sortKey} dir={sortDir} onClick={toggleSort} />
+              <SortableTh label="Signed Up" sortKey="signedUp" activeKey={sortKey} dir={sortDir} onClick={toggleSort} />
               <Th>Paid</Th>
               <Th>Level</Th>
               <Th>Goal</Th>
               <Th>Profile</Th>
-              <Th>Day</Th>
-              <Th>Completed</Th>
-              <Th>Streak</Th>
-              <Th>Last Active</Th>
+              <SortableTh label="Day" sortKey="day" activeKey={sortKey} dir={sortDir} onClick={toggleSort} />
+              <SortableTh label="Completed" sortKey="completed" activeKey={sortKey} dir={sortDir} onClick={toggleSort} />
+              <SortableTh label="Streak" sortKey="streak" activeKey={sortKey} dir={sortDir} onClick={toggleSort} />
+              <SortableTh label="Last Active" sortKey="lastActive" activeKey={sortKey} dir={sortDir} onClick={toggleSort} />
               <Th>Action</Th>
             </tr>
           </thead>
@@ -163,14 +237,21 @@ export default function AdminDashboard() {
                 </td>
               </tr>
             )}
-            {users?.length === 0 && (
+            {users !== null && users.length === 0 && (
               <tr>
                 <td colSpan={12} className="text-center py-10 text-op-off-white-dim text-xs">
                   No signups yet.
                 </td>
               </tr>
             )}
-            {users?.map((u) => {
+            {users !== null && users.length > 0 && filteredSortedUsers?.length === 0 && (
+              <tr>
+                <td colSpan={12} className="text-center py-10 text-op-off-white-dim text-xs">
+                  No one matches "{search}".
+                </td>
+              </tr>
+            )}
+            {filteredSortedUsers?.map((u) => {
               const idleDays = daysSince(u.lastActiveAt);
               const stalledRow = u.paid && idleDays !== null && idleDays >= 3 && (u.progressSummary?.totalCompleted ?? 0) < 28;
               return (
@@ -282,6 +363,35 @@ export default function AdminDashboard() {
 
 function Th({ children }: { children: ReactNode }) {
   return <th className="mono-label text-[11px] text-op-off-white-dim px-4 py-3 whitespace-nowrap">{children}</th>;
+}
+
+function SortableTh({
+  label,
+  sortKey,
+  activeKey,
+  dir,
+  onClick,
+}: {
+  label: string;
+  sortKey: SortKey;
+  activeKey: SortKey;
+  dir: "asc" | "desc";
+  onClick: (key: SortKey) => void;
+}) {
+  const active = activeKey === sortKey;
+  return (
+    <th className="px-4 py-3 whitespace-nowrap">
+      <button
+        onClick={() => onClick(sortKey)}
+        className={`mono-label text-[11px] flex items-center gap-1 hover:text-op-orange transition-colors ${
+          active ? "text-op-orange" : "text-op-off-white-dim"
+        }`}
+      >
+        {label}
+        <span className="text-[9px]">{active ? (dir === "asc" ? "▲" : "▼") : "↕"}</span>
+      </button>
+    </th>
+  );
 }
 
 function Td({ children, className = "" }: { children: ReactNode; className?: string }) {
