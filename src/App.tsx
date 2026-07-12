@@ -15,6 +15,8 @@ import Photos from "./pages/Photos";
 import Settings from "./pages/Settings";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
 
 export default function App() {
   return (
@@ -78,6 +80,8 @@ export default function App() {
               />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
             </Routes>
           </main>
           <Footer />

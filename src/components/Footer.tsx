@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export default function Footer() {
   return (
     <footer className="border-t border-op-line bg-op-black">
@@ -12,7 +14,17 @@ export default function Footer() {
           General fitness guidance only. Not medical advice. Consult a professional before starting any new
           exercise program, especially if you have an injury or health condition.
         </p>
-        <span className="mono-label text-[11px] text-op-off-white-dim">© {new Date().getFullYear()} · Field Copy</span>
+        <div className="flex flex-col items-start sm:items-end gap-2">
+          <div className="flex items-center gap-4">
+            <Link to="/privacy" className="mono-label text-[11px] text-op-off-white-dim hover:text-op-orange">
+              Privacy Policy
+            </Link>
+            <Link to="/terms" className="mono-label text-[11px] text-op-off-white-dim hover:text-op-orange">
+              Terms of Service
+            </Link>
+          </div>
+          <span className="mono-label text-[11px] text-op-off-white-dim">© {new Date().getFullYear()} · Field Copy</span>
+        </div>
       </div>
     </footer>
   );

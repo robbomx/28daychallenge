@@ -317,6 +317,18 @@ export default function Signup() {
 
               {error && <p className="text-sm text-op-error">{error}</p>}
 
+              <p className="text-xs text-op-off-white-dim">
+                By creating an account you agree to our{" "}
+                <Link to="/terms" target="_blank" className="text-op-orange hover:underline">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link to="/privacy" target="_blank" className="text-op-orange hover:underline">
+                  Privacy Policy
+                </Link>
+                .
+              </p>
+
               <div className="flex gap-3 mt-2">
                 <Button type="button" variant="ghost" onClick={goBack}>
                   Back
