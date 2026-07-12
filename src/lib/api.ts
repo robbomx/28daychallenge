@@ -1,6 +1,6 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-import type { FitnessLevel, Goal } from "../types";
+import type { FitnessLevel, Goal, OnboardingProfile } from "../types";
 
 export interface BackendUser {
   id: string;
@@ -10,6 +10,7 @@ export interface BackendUser {
   goal: Goal;
   paid: boolean;
   createdAt: string;
+  profile?: OnboardingProfile | null;
 }
 
 interface AuthResponse {
@@ -38,6 +39,7 @@ export function signup(input: {
   password: string;
   fitnessLevel: string;
   goal: string;
+  profile?: OnboardingProfile;
 }) {
   return request<AuthResponse>("/api/auth/signup", {
     method: "POST",
@@ -61,5 +63,46 @@ export function me(token: string) {
 export function getCheckoutLink(token: string) {
   return request<{ url: string }>("/api/checkout-link", {
     headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+// Fire-and-forget progress summary sync, purely so the admin dashboard has
+// real numbers to show. Never awaited by the UI and never blocks a person's
+// own experience of the app if it fails.
+export function syncProgress(
+  token: string,
+  summary: { currentDay: number; totalCompleted: number; streak: number; lastCompletedDay: number | null }
+) {
+  return request("/api/progress", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(summary),
+  }).catch(() => {
+    // Silently ignore — this is a nice-to-have for the admin view, not
+    // something that should ever interrupt the person using the app.
+  });
+}
+
+export interface AdminUserRow extends BackendUser {
+  lastActiveAt?: string;
+  progressSummary?: {
+    currentDay: number | null;
+    totalCompleted: number;
+    streak: number;
+    lastCompletedDay: number | null;
+    updatedAt: string;
+  } | null;
+}
+
+export function adminLogin(password: string) {
+  return request<{ token: string }>("/api/admin/login", {
+    method: "POST",
+    body: JSON.stringify({ password }),
+  });
+}
+
+export function adminGetUsers(adminToken: string) {
+  return request<{ users: AdminUserRow[] }>("/api/admin/users", {
+    headers: { Authorization: `Bearer ${adminToken}` },
   });
 }

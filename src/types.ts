@@ -7,6 +7,25 @@ export type Goal =
   | "Improve fitness"
   | "Restart routine";
 
+export type Gender = "Male" | "Female" | "Non-binary" | "Prefer not to say";
+
+export type BodyType = "Slim" | "Average build" | "Solid build" | "Larger build";
+
+export type DesiredOutcome =
+  | "Feel stronger day to day"
+  | "Look leaner"
+  | "Build visible muscle"
+  | "Improve endurance and stamina"
+  | "Just build a consistent habit";
+
+export interface OnboardingProfile {
+  age: number;
+  gender: Gender;
+  bodyType: BodyType;
+  desiredOutcome: DesiredOutcome;
+  notes: string;
+}
+
 export interface Exercise {
   name: string;
   setsOrRounds: string;
@@ -79,4 +98,5 @@ export interface AppUser {
   notifications: LocalUserRecord["notifications"];
   progress: ProgressRecord;
   photos: PhotoRecord;
+  profile?: OnboardingProfile | null;
 }

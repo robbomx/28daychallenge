@@ -15,6 +15,10 @@ export function signToken(userId) {
   return jwt.sign({ sub: userId }, JWT_SECRET, { expiresIn: "30d" });
 }
 
+export function signAdminToken() {
+  return jwt.sign({ admin: true }, JWT_SECRET, { expiresIn: "12h" });
+}
+
 export function authMiddleware(req, res, next) {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
@@ -25,6 +29,19 @@ export function authMiddleware(req, res, next) {
     next();
   } catch {
     return res.status(401).json({ error: "Session expired. Please log in again." });
+  }
+}
+
+export function adminAuthMiddleware(req, res, next) {
+  const header = req.headers.authorization || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+  if (!token) return res.status(401).json({ error: "Admin login required." });
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    if (!payload.admin) return res.status(403).json({ error: "Not an admin session." });
+    next();
+  } catch {
+    return res.status(401).json({ error: "Admin session expired. Please log in again." });
   }
 }
 

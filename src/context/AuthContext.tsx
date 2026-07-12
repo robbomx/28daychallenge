@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import type { AppUser } from "../types";
+import type { AppUser, OnboardingProfile } from "../types";
 import * as api from "../lib/api";
 import { clearToken, getToken, mergeUser, setToken } from "../lib/storage";
 
@@ -7,7 +7,14 @@ interface AuthContextValue {
   user: AppUser | null;
   loading: boolean;
   authError: string | null;
-  signup: (input: { firstName: string; email: string; password: string; fitnessLevel: string; goal: string }) => Promise<AppUser>;
+  signup: (input: {
+    firstName: string;
+    email: string;
+    password: string;
+    fitnessLevel: string;
+    goal: string;
+    profile?: OnboardingProfile;
+  }) => Promise<AppUser>;
   login: (input: { email: string; password: string }) => Promise<AppUser>;
   refreshUser: () => void;
   setUser: (u: AppUser | null) => void;

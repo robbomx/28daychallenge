@@ -13,6 +13,8 @@ import Tracker from "./pages/Tracker";
 import Nutrition from "./pages/Nutrition";
 import Photos from "./pages/Photos";
 import Settings from "./pages/Settings";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 
 export default function App() {
   return (
@@ -74,6 +76,8 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin" element={<AdminDashboard />} />
             </Routes>
           </main>
           <Footer />

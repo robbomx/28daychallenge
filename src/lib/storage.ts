@@ -1,8 +1,24 @@
 import type { AppUser, DailyChecklistState, LocalUserRecord, PhotoRecord } from "../types";
 import type { BackendUser } from "./api";
+import { syncProgress } from "./api";
 
 const TOKEN_KEY = "standard28_token";
+const ADMIN_TOKEN_KEY = "standard28_admin_token";
 const LOCAL_RECORDS_KEY = "standard28_local_records"; // keyed by user id
+
+// ---- Admin session token (fully separate from user login) ----
+
+export function getAdminToken(): string | null {
+  return localStorage.getItem(ADMIN_TOKEN_KEY);
+}
+
+export function setAdminToken(token: string) {
+  localStorage.setItem(ADMIN_TOKEN_KEY, token);
+}
+
+export function clearAdminToken() {
+  localStorage.removeItem(ADMIN_TOKEN_KEY);
+}
 
 // ---- Session token (identity/payment lives on the backend) ----
 
@@ -86,6 +102,7 @@ export function markWorkoutComplete(user: AppUser, dayNumber: number): AppUser {
   };
   const updated: AppUser = { ...user, progress: { ...user.progress, [dayNumber]: record } };
   saveUserLocalPart(updated);
+  syncToServer(updated);
   return updated;
 }
 
@@ -108,6 +125,7 @@ export function markDayMissedRecovered(user: AppUser, dayNumber: number, action:
     updated = { ...user, progress, startDate: newStart.toISOString() };
   }
   saveUserLocalPart(updated);
+  syncToServer(updated);
   return updated;
 }
 
@@ -120,6 +138,7 @@ export function savePhoto(user: AppUser, slot: keyof PhotoRecord, dataUrl: strin
 export function resetChallenge(user: AppUser): AppUser {
   const updated: AppUser = { ...user, progress: {}, startDate: new Date().toISOString() };
   saveUserLocalPart(updated);
+  syncToServer(updated);
   return updated;
 }
 
@@ -145,4 +164,22 @@ export function computeStreak(user: AppUser): number {
 
 export function computeTotalCompleted(user: AppUser): number {
   return Object.values(user.progress).filter((r) => r.status === "completed").length;
+}
+
+// Mirrors a lightweight progress summary to the backend, purely for the
+// admin dashboard. Fire-and-forget — never awaited, never blocks the UI.
+function syncToServer(user: AppUser) {
+  const token = getToken();
+  if (!token) return;
+  const currentDay = getCurrentDay(user);
+  const completedDays = Object.entries(user.progress)
+    .filter(([, r]) => r.status === "completed")
+    .map(([day]) => Number(day));
+  const lastCompletedDay = completedDays.length ? Math.max(...completedDays) : null;
+  syncProgress(token, {
+    currentDay,
+    totalCompleted: computeTotalCompleted(user),
+    streak: computeStreak(user),
+    lastCompletedDay,
+  });
 }
