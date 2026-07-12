@@ -9,6 +9,19 @@ A responsive site for a 28 day military-inspired calisthenics challenge. React +
 
 Why split it this way: progress data is low-stakes and fine to keep client-side, but "did this person actually pay" cannot be verified client-side — that has to live somewhere a user can't edit, which is what the backend + Stripe webhook are for.
 
+## Database (required — set this up before anything else)
+
+Accounts and payment status are stored in a real Postgres database, not a file — this matters because file-based storage on hosts like Render gets wiped on every redeploy or environment variable change, silently deleting real customers' accounts. Postgres, as a separate hosted service, is completely unaffected by anything happening to the app's own server.
+
+1. Create a free Postgres database at **[neon.tech](https://neon.tech)** or **[supabase.com](https://supabase.com)** (both have generous free tiers, no credit card required)
+2. Copy the connection string they give you — looks like:
+   ```
+   postgresql://user:password@host/dbname?sslmode=require
+   ```
+3. Set this as `DATABASE_URL` in `server/.env` (locally) and in your host's environment variables (in production, e.g. Render)
+
+The backend creates its own database table automatically the first time it starts up — no manual SQL needed.
+
 ## Running it locally
 
 **1. Start the backend**
@@ -16,7 +29,7 @@ Why split it this way: progress data is low-stakes and fine to keep client-side,
 cd server
 npm install
 cp .env.example .env
-# edit .env — at minimum set JWT_SECRET to a random string
+# edit .env — set DATABASE_URL (see above) and JWT_SECRET at minimum
 npm start
 ```
 This runs on `http://localhost:4000` by default.
@@ -57,7 +70,7 @@ How the payment flow works end to end:
 
 ## Deploying
 
-**Backend** — needs a host that runs a persistent Node process (Render, Railway, Fly.io — not a static host). Set the environment variables from above. Note the included `data/users.json` file storage works for a small prototype but isn't built for concurrent production traffic; swap in a real database (Postgres, etc.) if this needs to scale.
+**Backend** — needs a host that runs a persistent Node process (Render, Railway, Fly.io — not a static host). Set the environment variables from above, including `DATABASE_URL` pointing at a real Postgres database (see "Database" below) — the backend will refuse to do anything useful without it.
 
 **Frontend** — any static host (Netlify, Vercel, GitHub Pages). Build with:
 ```bash
@@ -82,7 +95,6 @@ The signup form asks only for what's needed to run an account: name, email, pass
 
 ## Known limitations (prototype-level)
 
-- **The server's "database" is a JSON file stored on local disk.** This is the most important limitation to fix before relying on this for real customers: on hosts like Render's free tier, this file is wiped on every redeploy (including just saving a new environment variable). If you get real signups, changing any server setting afterward can silently delete their accounts. Before running paid traffic at any real volume, swap this for a real hosted database (Neon and Supabase both have generous free Postgres tiers) — happy to walk through that migration.
 - Workout progress/photos are per-browser (local storage) for the person using the app — only a lightweight summary (current day, total completed, streak, last active) is mirrored to the backend for the admin dashboard.
 - Profile fields (name, email, fitness level, goal) aren't editable after signup yet — that would need a backend "update profile" endpoint.
 - No automated password reset email yet — the "Forgot password" link currently points people to a support email instead.
