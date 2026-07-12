@@ -1,6 +1,6 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-import type { FitnessLevel, Goal, OnboardingProfile } from "../types";
+import type { FitnessLevel, Goal } from "../types";
 
 export interface BackendUser {
   id: string;
@@ -10,7 +10,6 @@ export interface BackendUser {
   goal: Goal;
   paid: boolean;
   createdAt: string;
-  profile?: OnboardingProfile | null;
 }
 
 interface AuthResponse {
@@ -39,7 +38,6 @@ export function signup(input: {
   password: string;
   fitnessLevel: string;
   goal: string;
-  profile?: OnboardingProfile;
 }) {
   return request<AuthResponse>("/api/auth/signup", {
     method: "POST",

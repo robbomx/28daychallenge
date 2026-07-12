@@ -69,24 +69,22 @@ Set `VITE_API_URL` to your deployed backend's URL before building (as a `.env` f
 
 - **Landing page** (`/`) — hero, challenge overview, 4-phase preview, testimonials, real photography, CTA
 - **Pricing** (`/pricing`) — $39 one-time Stripe checkout, personalized per account
-- **Signup / Login** (`/signup`, `/login`) — two-step signup (quick intake survey, then account creation) via the backend
+- **Signup / Login** (`/signup`, `/login`) — single-step account creation via the backend
 - **Dashboard** (`/dashboard`) — streak, total completed, today's workout, automatic completion status
 - **Daily workout** (`/workout/:dayNumber`) — full exercise detail, scaled by fitness level, form-video links
 - **28 day tracker** (`/tracker`) — grouped by week/phase, missed/recovered/restart handling
 - **Nutrition** (`/nutrition`) — daily non-negotiables, nutrition rules, allowed food list with portion guides
 - **Photos** (`/photos`) — Day 1/14/28 uploads with side-by-side comparison
 - **Settings** (`/settings`) — notification preferences, reset-challenge flow
-- **Admin dashboard** (`/admin`, login at `/admin/login`) — every signup, their intake survey answers, paid status, current day, completion count, streak, and days-since-last-active, plus a "stalled" flag for paid users who've gone quiet mid-program. Protected by a separate admin password (`ADMIN_PASSWORD` in the server's environment variables) — set this to something long and random before deploying, since it's the only thing guarding this data.
+- **Admin dashboard** (`/admin`, login at `/admin/login`) — every signup, paid status, current day, completion count, streak, and days-since-last-active, plus a "stalled" flag for paid users who've gone quiet mid-program, with search and sortable columns. Protected by a separate admin password (`ADMIN_PASSWORD` in the server's environment variables) — set this to something long and random before deploying, since it's the only thing guarding this data.
 
-### The intake survey
-
-Signup now starts with a short survey (age, gender, current build, primary goal, what success looks like, optional notes on injuries/limitations). This is intentionally **not** used to change the workouts themselves — fitness level (picked during account creation) is still the only thing that scales exercise volume. The survey exists to (a) make the experience feel tailored, and (b) give you visibility in the admin dashboard into who's signing up. Age is validated server-side (16+ required).
+The signup form asks only for what's needed to run an account: name, email, password, fitness level, and goal. Age is not collected as data — signup just requires a client-side checkbox confirming the person is 16 or older, matching the fitness/payment nature of the product without storing anything.
 
 ## Known limitations (prototype-level)
 
 - **The server's "database" is a JSON file stored on local disk.** This is the most important limitation to fix before relying on this for real customers: on hosts like Render's free tier, this file is wiped on every redeploy (including just saving a new environment variable). If you get real signups, changing any server setting afterward can silently delete their accounts. Before running paid traffic at any real volume, swap this for a real hosted database (Neon and Supabase both have generous free Postgres tiers) — happy to walk through that migration.
 - Workout progress/photos are per-browser (local storage) for the person using the app — only a lightweight summary (current day, total completed, streak, last active) is mirrored to the backend for the admin dashboard.
-- Profile fields (name, email, fitness level, goal, survey answers) aren't editable after signup yet — that would need a backend "update profile" endpoint.
+- Profile fields (name, email, fitness level, goal) aren't editable after signup yet — that would need a backend "update profile" endpoint.
 - No automated password reset email yet — the "Forgot password" link currently points people to a support email instead.
 - The admin dashboard shares the same page layout/nav as the public site — it works, but a dedicated admin layout (no public nav) would be cleaner.
 

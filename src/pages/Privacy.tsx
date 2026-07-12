@@ -1,30 +1,17 @@
 import type { ReactNode } from "react";
-import Card from "../components/Card";
 
 export default function Privacy() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
       <span className="mono-label text-xs text-op-orange">Legal</span>
       <h1 className="font-display text-3xl sm:text-4xl text-op-off-white mt-2 mb-3">Privacy Policy</h1>
-      <p className="text-xs text-op-off-white-dim mb-10">Last updated: [insert date before publishing]</p>
-
-      <Card variant="panel" className="p-6 mb-8 border-op-sand/40">
-        <p className="text-xs text-op-sand leading-relaxed">
-          <strong>Template notice:</strong> this page describes what the site actually does, based on how it's
-          built today. It is a starting point, not legal advice — have it reviewed by a lawyer before relying on it,
-          especially since real payments and personal information are involved.
-        </p>
-      </Card>
+      <p className="text-xs text-op-off-white-dim mb-10">Last updated: 12 July 2026</p>
 
       <div className="flex flex-col gap-8 text-sm text-op-off-white-dim leading-relaxed">
         <Section title="What we collect">
           <ul className="list-disc pl-5 flex flex-col gap-1.5">
             <li>Account details: first name, email address, and a password (stored as a secure hash, never in plain text).</li>
-            <li>
-              Intake survey answers: age, gender, current build, fitness goal, desired outcome, and any optional
-              notes you provide (e.g. injuries or limitations).
-            </li>
-            <li>Fitness level selection, used to scale workout difficulty.</li>
+            <li>Fitness level and goal selection, used to scale workout difficulty and tone.</li>
             <li>
               A lightweight progress summary (current day, days completed, streak, last active date) so we can see
               how the program is landing and offer support if you get stuck.
@@ -54,9 +41,9 @@ export default function Privacy() {
 
         <Section title="Who can see your data">
           <p>
-            Account and survey information, along with your progress summary, is visible to the site
-            administrator through an internal, password-protected dashboard used to run and support the program.
-            It is not shared publicly or with advertisers.
+            Account information and your progress summary is visible to the site administrator through an
+            internal, password-protected dashboard used to run and support the program. It is not shared publicly
+            or with advertisers.
           </p>
         </Section>
 

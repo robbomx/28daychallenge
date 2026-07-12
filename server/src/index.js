@@ -96,18 +96,12 @@ app.get("/api/health", (req, res) => {
 });
 
 app.post("/api/auth/signup", rateLimit(10, 15 * 60 * 1000), async (req, res) => {
-  const { firstName, email, password, fitnessLevel, goal, profile } = req.body || {};
+  const { firstName, email, password, fitnessLevel, goal } = req.body || {};
   if (!firstName || !email || !password) {
     return res.status(400).json({ error: "First name, email and password are required." });
   }
   if (password.length < 6) {
     return res.status(400).json({ error: "Password must be at least 6 characters." });
-  }
-  if (profile && profile.age != null) {
-    const age = Number(profile.age);
-    if (!Number.isFinite(age) || age < 16 || age > 100) {
-      return res.status(400).json({ error: "You must be 16 or older to sign up for this program." });
-    }
   }
   if (findUserByEmail(email)) {
     return res.status(409).json({ error: "An account with this email already exists." });
@@ -121,7 +115,6 @@ app.post("/api/auth/signup", rateLimit(10, 15 * 60 * 1000), async (req, res) => 
     passwordHash,
     fitnessLevel: fitnessLevel || "Beginner",
     goal: goal || "Improve fitness",
-    profile: profile || null,
     paid: false,
     createdAt: new Date().toISOString(),
     lastActiveAt: new Date().toISOString(),

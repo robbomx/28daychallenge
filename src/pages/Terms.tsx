@@ -1,20 +1,11 @@
 import type { ReactNode } from "react";
-import Card from "../components/Card";
 
 export default function Terms() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
       <span className="mono-label text-xs text-op-orange">Legal</span>
       <h1 className="font-display text-3xl sm:text-4xl text-op-off-white mt-2 mb-3">Terms of Service</h1>
-      <p className="text-xs text-op-off-white-dim mb-10">Last updated: [insert date before publishing]</p>
-
-      <Card variant="panel" className="p-6 mb-8 border-op-sand/40">
-        <p className="text-xs text-op-sand leading-relaxed">
-          <strong>Template notice:</strong> jurisdiction (Victoria, Australia) and the refund policy below reflect
-          what you've specified. This is still a starting draft, not lawyer-reviewed legal advice — get the
-          liability limitation clause and overall wording checked before relying on it commercially.
-        </p>
-      </Card>
+      <p className="text-xs text-op-off-white-dim mb-10">Last updated: 12 July 2026</p>
 
       <div className="flex flex-col gap-8 text-sm text-op-off-white-dim leading-relaxed">
         <Section title="1. What you're buying">
@@ -86,9 +77,7 @@ export default function Terms() {
             Nothing in these terms excludes, restricts, or modifies any consumer guarantee, right, or remedy under
             the Australian Consumer Law that cannot lawfully be excluded — including guarantees relating to
             acceptable quality and fitness for purpose. Where liability for breach of such a guarantee cannot be
-            excluded but can be limited, our liability is limited to the extent permitted by law. This clause
-            should still be reviewed by a lawyer before you rely on it — enforceability of liability caps varies
-            by circumstance.
+            excluded but can be limited, our liability is limited to the extent permitted by law.
           </p>
         </Section>
 

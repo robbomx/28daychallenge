@@ -221,7 +221,6 @@ export default function AdminDashboard() {
               <Th>Paid</Th>
               <Th>Level</Th>
               <Th>Goal</Th>
-              <Th>Profile</Th>
               <SortableTh label="Day" sortKey="day" activeKey={sortKey} dir={sortDir} onClick={toggleSort} />
               <SortableTh label="Completed" sortKey="completed" activeKey={sortKey} dir={sortDir} onClick={toggleSort} />
               <SortableTh label="Streak" sortKey="streak" activeKey={sortKey} dir={sortDir} onClick={toggleSort} />
@@ -232,21 +231,21 @@ export default function AdminDashboard() {
           <tbody>
             {users === null && !error && (
               <tr>
-                <td colSpan={12} className="text-center py-10 text-op-off-white-dim text-xs">
+                <td colSpan={11} className="text-center py-10 text-op-off-white-dim text-xs">
                   Loading…
                 </td>
               </tr>
             )}
             {users !== null && users.length === 0 && (
               <tr>
-                <td colSpan={12} className="text-center py-10 text-op-off-white-dim text-xs">
+                <td colSpan={11} className="text-center py-10 text-op-off-white-dim text-xs">
                   No signups yet.
                 </td>
               </tr>
             )}
             {users !== null && users.length > 0 && filteredSortedUsers?.length === 0 && (
               <tr>
-                <td colSpan={12} className="text-center py-10 text-op-off-white-dim text-xs">
+                <td colSpan={11} className="text-center py-10 text-op-off-white-dim text-xs">
                   No one matches "{search}".
                 </td>
               </tr>
@@ -264,19 +263,6 @@ export default function AdminDashboard() {
                   </Td>
                   <Td>{u.fitnessLevel}</Td>
                   <Td>{u.goal}</Td>
-                  <Td className="max-w-[220px]">
-                    {u.profile ? (
-                      <div className="flex flex-col gap-0.5 text-xs text-op-off-white-dim">
-                        <span>
-                          {u.profile.age} · {u.profile.gender} · {u.profile.bodyType}
-                        </span>
-                        <span>{u.profile.desiredOutcome}</span>
-                        {u.profile.notes && <span className="text-op-sand">"{u.profile.notes}"</span>}
-                      </div>
-                    ) : (
-                      <span className="text-op-off-white-dim/50">—</span>
-                    )}
-                  </Td>
                   <Td>{u.progressSummary?.currentDay ?? "—"}</Td>
                   <Td>{u.progressSummary?.totalCompleted ?? 0}/28</Td>
                   <Td>{u.progressSummary?.streak ?? 0}</Td>
