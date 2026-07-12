@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { computeStreak, computeTotalCompleted, getCurrentDay, markWorkoutComplete, updateChecklist } from "../lib/storage";
+import { computeStreak, computeTotalCompleted, getCurrentDay } from "../lib/storage";
 import { getDayData } from "../data/workoutPlan";
 import ProgressRing from "../components/ProgressRing";
 import Card from "../components/Card";
@@ -11,14 +11,10 @@ import type { DailyChecklistState } from "../types";
 
 const emptyChecklist: DailyChecklistState = {
   workoutCompleted: false,
-  stepsCompleted: false,
-  waterCompleted: false,
-  proteinTarget: false,
-  sleepTarget: false,
 };
 
 export default function Dashboard() {
-  const { user, setUser } = useAuth();
+  const { user } = useAuth();
   if (!user) return null;
 
   const currentDay = getCurrentDay(user);
@@ -29,15 +25,6 @@ export default function Dashboard() {
   const todayRecord = user.progress[currentDay];
   const checklist = todayRecord?.checklist ?? emptyChecklist;
   const completedToday = todayRecord?.status === "completed";
-
-  const handleToggle = (key: keyof DailyChecklistState) => {
-    const next = { ...checklist, [key]: !checklist[key] };
-    setUser(updateChecklist(user, currentDay, next));
-  };
-
-  const handleQuickComplete = () => {
-    setUser(markWorkoutComplete(user, currentDay));
-  };
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
@@ -79,18 +66,18 @@ export default function Dashboard() {
         </div>
         <Card variant="panel" className="p-6">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="font-display text-lg text-op-off-white">Daily Checklist</h3>
+            <h3 className="font-display text-lg text-op-off-white">Today's Status</h3>
             {completedToday && <Badge tone="success">Done</Badge>}
           </div>
           <p className="text-xs text-op-off-white-dim mb-3">Day {currentDay} accountability check-in</p>
-          <DailyChecklist checklist={checklist} onToggle={handleToggle} />
-          {!checklist.workoutCompleted && (
-            <button
-              onClick={handleQuickComplete}
-              className="mono-label text-xs text-op-orange hover:underline mt-3"
+          <DailyChecklist checklist={checklist} />
+          {!checklist.workoutCompleted && today && (
+            <Link
+              to={`/workout/${currentDay}`}
+              className="mono-label text-xs text-op-orange hover:underline mt-3 inline-block"
             >
-              Mark workout completed
-            </button>
+              Go complete today's workout →
+            </Link>
           )}
         </Card>
       </div>

@@ -6,6 +6,7 @@ import { markWorkoutComplete } from "../lib/storage";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
 import Button from "../components/Button";
+import { getFormVideoLink, shouldShowFormVideo } from "../data/exerciseVideos";
 
 const difficultyTone: Record<string, "success" | "warning" | "orange" | "error"> = {
   Low: "success",
@@ -76,26 +77,43 @@ export default function Workout() {
 
       <Section title="Main Workout">
         <div className="flex flex-col gap-3">
-          {day.exercises.map((ex, i) => (
-            <Card key={i} variant="panel" className="p-4">
-              <div className="flex items-start justify-between gap-3">
-                <h4 className="font-display text-base text-op-off-white">{ex.name}</h4>
-                <span className="mono-label text-[11px] text-op-off-white-dim whitespace-nowrap">
-                  {ex.setsOrRounds}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
-                <InfoRow label="Reps / Time" value={ex.repsOrTime} />
-                <InfoRow label="Rest" value={ex.rest} />
-              </div>
-              <p className="text-xs text-op-off-white-dim mt-3">
-                <span className="text-op-sand">Modification:</span> {ex.modification}
-              </p>
-              <p className="text-xs text-op-off-white-dim mt-1">
-                <span className="text-op-sand">Intensity note:</span> {ex.intensityNote}
-              </p>
-            </Card>
-          ))}
+          {day.exercises.map((ex, i) => {
+            const video = shouldShowFormVideo(ex.name) ? getFormVideoLink(ex.name) : null;
+            return (
+              <Card key={i} variant="panel" className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <h4 className="font-display text-base text-op-off-white">{ex.name}</h4>
+                  <span className="mono-label text-[11px] text-op-off-white-dim whitespace-nowrap">
+                    {ex.setsOrRounds}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
+                  <InfoRow label="Reps / Time" value={ex.repsOrTime} />
+                  <InfoRow label="Rest" value={ex.rest} />
+                </div>
+                <p className="text-xs text-op-off-white-dim mt-3">
+                  <span className="text-op-sand">Modification:</span> {ex.modification}
+                </p>
+                <p className="text-xs text-op-off-white-dim mt-1">
+                  <span className="text-op-sand">Intensity note:</span> {ex.intensityNote}
+                </p>
+                {video && (
+                  <a
+                    href={video.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 mono-label text-[11px] text-op-orange hover:underline mt-3"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                      <rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+                      <path d="M6.5 6L10.5 8L6.5 10V6Z" fill="currentColor" />
+                    </svg>
+                    Watch form video
+                  </a>
+                )}
+              </Card>
+            );
+          })}
         </div>
       </Section>
 

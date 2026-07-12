@@ -37,10 +37,6 @@ export type DayStatus = "locked" | "available" | "completed" | "missed" | "recov
 
 export interface DailyChecklistState {
   workoutCompleted: boolean;
-  stepsCompleted: boolean;
-  waterCompleted: boolean;
-  proteinTarget: boolean;
-  sleepTarget: boolean;
 }
 
 export interface ProgressRecord {

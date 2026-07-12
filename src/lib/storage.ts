@@ -75,45 +75,25 @@ export function getCurrentDay(user: AppUser): number {
   return Math.min(Math.max(diffDays, 1), 28);
 }
 
-export function updateChecklist(user: AppUser, dayNumber: number, checklist: DailyChecklistState): AppUser {
-  const record = user.progress[dayNumber] ?? { checklist, status: "available" as const };
-  record.checklist = checklist;
-  const allDone = Object.values(checklist).every(Boolean);
-  if (allDone) {
-    record.status = "completed";
-    record.completedAt = new Date().toISOString();
-  }
+export function markWorkoutComplete(user: AppUser, dayNumber: number): AppUser {
+  const record = {
+    checklist: { workoutCompleted: true } as DailyChecklistState,
+    status: "completed" as const,
+    completedAt: new Date().toISOString(),
+  };
   const updated: AppUser = { ...user, progress: { ...user.progress, [dayNumber]: record } };
   saveUserLocalPart(updated);
   return updated;
 }
 
-export function markWorkoutComplete(user: AppUser, dayNumber: number): AppUser {
-  const existing = user.progress[dayNumber]?.checklist ?? {
-    workoutCompleted: false,
-    stepsCompleted: false,
-    waterCompleted: false,
-    proteinTarget: false,
-    sleepTarget: false,
-  };
-  const checklist = { ...existing, workoutCompleted: true };
-  return updateChecklist(user, dayNumber, checklist);
-}
-
 export function markDayMissedRecovered(user: AppUser, dayNumber: number, action: "recovered" | "restart"): AppUser {
   let updated: AppUser;
   if (action === "recovered") {
-    const record = user.progress[dayNumber] ?? {
-      checklist: {
-        workoutCompleted: true,
-        stepsCompleted: false,
-        waterCompleted: false,
-        proteinTarget: false,
-        sleepTarget: false,
-      },
+    const record = {
+      checklist: { workoutCompleted: true } as DailyChecklistState,
       status: "completed" as const,
+      completedAt: new Date().toISOString(),
     };
-    record.status = "completed";
     updated = { ...user, progress: { ...user.progress, [dayNumber]: record } };
   } else {
     const progress = { ...user.progress };

@@ -13,6 +13,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState("");
+  const [showForgotHelp, setShowForgotHelp] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -65,10 +66,24 @@ export default function Login() {
               />
               Remember me
             </label>
-            <button type="button" className="text-xs text-op-orange hover:underline">
+            <button
+              type="button"
+              onClick={() => setShowForgotHelp((v) => !v)}
+              className="text-xs text-op-orange hover:underline"
+            >
               Forgot password?
             </button>
           </div>
+
+          {showForgotHelp && (
+            <div className="bg-op-panel border border-op-line rounded-sm p-4 text-xs text-op-off-white-dim leading-relaxed">
+              Automatic password reset isn't available yet. Email{" "}
+              <a href="mailto:support@the28daystandard.com" className="text-op-orange hover:underline">
+                support@the28daystandard.com
+              </a>{" "}
+              from the address you signed up with and we'll help you reset it manually.
+            </div>
+          )}
 
           {error && <p className="text-sm text-op-error">{error}</p>}
 

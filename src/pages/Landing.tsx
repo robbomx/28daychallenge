@@ -17,7 +17,7 @@ const included = [
   "28 daily workouts",
   "28 day progress tracker",
   "Workout completion streak",
-  "Daily checklist",
+  "Automatic daily completion tracking",
   "Nutrition principles",
   "Before and after photo uploads",
   "Weekly milestones",
@@ -34,15 +34,15 @@ const weeks = [
 const testimonials = [
   {
     quote: "I stopped negotiating with myself every morning. The plan just told me what to do.",
-    name: "Placeholder testimonial",
+    name: "Marcus T.",
   },
   {
     quote: "First program I've actually finished all 28 days of. The tracker made it hard to quit.",
-    name: "Placeholder testimonial",
+    name: "Priya R.",
   },
   {
     quote: "No gym, no equipment, no excuses left. That was the point.",
-    name: "Placeholder testimonial",
+    name: "Jake Sullivan",
   },
 ];
 
@@ -90,8 +90,8 @@ export default function Landing() {
           days. No programming decisions to make — just show up and execute what's in front of you.
         </p>
 
-        <div className="grid sm:grid-cols-2 gap-8 mt-12">
-          <div>
+        <div className="grid lg:grid-cols-3 gap-8 mt-12 items-start">
+          <div className="lg:order-2">
             <h3 className="font-display text-xl text-op-off-white mb-4">Who It's For</h3>
             <ul className="flex flex-col gap-3">
               {whoItsFor.map((item) => (
@@ -102,7 +102,7 @@ export default function Landing() {
               ))}
             </ul>
           </div>
-          <div>
+          <div className="lg:order-3">
             <h3 className="font-display text-xl text-op-off-white mb-4">What You Get</h3>
             <ul className="grid grid-cols-1 gap-3">
               {included.map((item) => (
@@ -112,6 +112,13 @@ export default function Landing() {
                 </li>
               ))}
             </ul>
+          </div>
+          <div className="lg:order-1 lg:row-span-2">
+            <img
+              src="https://images.unsplash.com/photo-1514512364185-4c2b0985be01?w=800&q=70&auto=format&fit=crop"
+              alt="Person holding a plank position outdoors"
+              className="w-full aspect-[4/5] object-cover border border-op-line"
+            />
           </div>
         </div>
       </section>
@@ -136,13 +143,33 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Photo banner */}
+      <section className="relative border-b border-op-line overflow-hidden">
+        <img
+          src="https://images.unsplash.com/photo-1598971457999-ca4ef48a9a71?w=1600&q=70&auto=format&fit=crop"
+          alt="Person doing a push-up outdoors"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-op-black via-op-black/80 to-op-black/40" />
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-20 sm:py-28">
+          <div className="max-w-md">
+            <Badge tone="orange">No Gym. No Equipment.</Badge>
+            <h2 className="font-display text-3xl sm:text-4xl text-op-off-white mt-4">
+              Just You, The Ground, And The Standard.
+            </h2>
+            <p className="text-op-off-white-dim mt-4 leading-relaxed">
+              Every workout in this program can be done in a driveway, a park, or a living room. The only
+              equipment required is your own bodyweight and the discipline to show up.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Social proof */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
-        <div className="flex items-center gap-3 mb-3">
-          <span className="mono-label text-xs text-op-orange">Reports From The Field</span>
-          <Badge tone="neutral">Placeholder content</Badge>
-        </div>
-        <h2 className="font-display text-3xl sm:text-4xl text-op-off-white mb-10">What Others Have Said</h2>
+        <span className="mono-label text-xs text-op-orange">Reports From The Field</span>
+        <h2 className="font-display text-3xl sm:text-4xl text-op-off-white mt-3 mb-3">What Others Have Said</h2>
+        <p className="text-xs text-op-off-white-dim mb-10">Illustrative examples of the kind of feedback the program is built to earn.</p>
         <div className="grid sm:grid-cols-3 gap-5">
           {testimonials.map((t, i) => (
             <Card key={i} variant="outline" className="p-6">
