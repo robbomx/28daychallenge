@@ -51,10 +51,10 @@ export default function Navbar() {
             ))
           ) : (
             <>
-              <a href="#what-is-it" className="mono-label text-xs px-3 py-2 text-op-off-white-dim hover:text-op-off-white">
+              <a href="/#what-is-it" className="mono-label text-xs px-3 py-2 text-op-off-white-dim hover:text-op-off-white">
                 The Challenge
               </a>
-              <a href="#weeks" className="mono-label text-xs px-3 py-2 text-op-off-white-dim hover:text-op-off-white">
+              <a href="/#weeks" className="mono-label text-xs px-3 py-2 text-op-off-white-dim hover:text-op-off-white">
                 The Plan
               </a>
               <NavLink
