@@ -95,7 +95,7 @@ The signup form asks only for what's needed to run an account: name, email, pass
 
 ## Known limitations (prototype-level)
 
-- Workout progress/photos are per-browser (local storage) for the person using the app — only a lightweight summary (current day, total completed, streak, last active) is mirrored to the backend for the admin dashboard.
+- Day-by-day workout progress, streaks, and start date now sync fully to the backend and follow a person across any device they log into — not just a summary for the admin dashboard. Local storage is still used as a fast, offline-friendly cache, but the server is the source of truth once at least one sync has happened. Before/after photos remain local-only (per-device), since syncing base64 images at scale would be a meaningfully bigger, separate change.
 - Profile fields (name, email, fitness level, goal) aren't editable after signup yet — that would need a backend "update profile" endpoint.
 - No automated password reset email yet — the "Forgot password" link currently points people to a support email instead.
 - The admin dashboard shares the same page layout/nav as the public site — it works, but a dedicated admin layout (no public nav) would be cleaner.

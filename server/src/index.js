@@ -250,10 +250,12 @@ app.get("/api/checkout-link", authMiddleware, async (req, res) => {
 // not the source of truth for the person's own experience of the app.
 app.post("/api/progress", authMiddleware, async (req, res) => {
   try {
-    const { currentDay, totalCompleted, streak, lastCompletedDay } = req.body || {};
+    const { progress, startDate, notifications, currentDay, totalCompleted, streak, lastCompletedDay } =
+      req.body || {};
     const user = await findUserById(req.userId);
     if (!user) return res.status(404).json({ error: "User not found." });
-    await updateUser(req.userId, {
+
+    const updates = {
       lastActiveAt: new Date().toISOString(),
       progressSummary: {
         currentDay: currentDay ?? null,
@@ -262,8 +264,16 @@ app.post("/api/progress", authMiddleware, async (req, res) => {
         lastCompletedDay: lastCompletedDay ?? null,
         updatedAt: new Date().toISOString(),
       },
-    });
-    res.json({ ok: true });
+    };
+    // Full day-by-day progress and start date now live here too, so logging in
+    // on any device restores exactly where someone left off — not just the
+    // summary numbers shown to admins.
+    if (progress !== undefined) updates.progress = progress;
+    if (startDate !== undefined) updates.startDate = startDate;
+    if (notifications !== undefined) updates.notifications = notifications;
+
+    const updated = await updateUser(req.userId, updates);
+    res.json({ ok: true, user: toPublicUser(updated) });
   } catch (err) {
     console.error("Progress sync error:", err);
     res.status(500).json({ error: "Failed to sync progress." });

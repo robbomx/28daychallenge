@@ -1,7 +1,19 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { AppUser } from "../types";
+import type { BackendUser } from "../lib/api";
 import * as api from "../lib/api";
-import { clearToken, getToken, mergeUser, setToken } from "../lib/storage";
+import { clearToken, getToken, mergeUser, setToken, syncToServer } from "../lib/storage";
+
+// If the backend has never received a progress sync for this account (a
+// brand new signup, or an account that predates this feature), push
+// whatever's in this browser's local copy up immediately. This is what lets
+// an existing local-only account "graduate" into being cross-device synced
+// the moment it's used again.
+function syncIfLegacyAccount(backendUser: BackendUser, merged: AppUser) {
+  if (backendUser.progress === undefined) {
+    syncToServer(merged);
+  }
+}
 
 interface AuthContextValue {
   user: AppUser | null;
@@ -35,7 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     api
       .me(token)
-      .then(({ user }) => setUserState(mergeUser(user)))
+      .then(({ user }) => {
+        const merged = mergeUser(user);
+        setUserState(merged);
+        syncIfLegacyAccount(user, merged);
+      })
       .catch(() => clearToken())
       .finally(() => setLoading(false));
   }, []);
@@ -47,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(token);
       const merged = mergeUser(user);
       setUserState(merged);
+      syncIfLegacyAccount(user, merged);
       return merged;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Signup failed.";
@@ -62,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(token);
       const merged = mergeUser(user);
       setUserState(merged);
+      syncIfLegacyAccount(user, merged);
       return merged;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed.";
@@ -75,7 +93,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!token) return;
     api
       .me(token)
-      .then(({ user }) => setUserState(mergeUser(user)))
+      .then(({ user }) => {
+        const merged = mergeUser(user);
+        setUserState(merged);
+        syncIfLegacyAccount(user, merged);
+      })
       .catch(() => {});
   };
 

@@ -71,7 +71,29 @@ function saveLocalRecord(userId: string, record: LocalUserRecord) {
 
 export function mergeUser(backendUser: BackendUser): AppUser {
   const local = getLocalRecord(backendUser.id, backendUser.createdAt);
-  return { ...backendUser, ...local };
+
+  // The server becomes the source of truth for progress/startDate/notifications
+  // once it has any (i.e. after at least one sync from any device). This is
+  // what makes "complete Day 1 on your phone, check the tracker on your
+  // laptop" actually work. Brand new accounts, or accounts that predate this
+  // sync existing, fall back to whatever's in this browser's local copy.
+  const progress = backendUser.progress !== undefined ? backendUser.progress : local.progress;
+  const startDate = backendUser.startDate !== undefined ? backendUser.startDate : local.startDate;
+  const notifications = backendUser.notifications !== undefined ? backendUser.notifications : local.notifications;
+
+  const merged: AppUser = {
+    ...backendUser,
+    startDate,
+    notifications,
+    progress,
+    photos: local.photos, // photos stay local-only — see savePhoto below
+  };
+
+  // Keep the local cache aligned with whatever we just decided is authoritative,
+  // so the fast local-first reads/writes elsewhere in the app stay correct.
+  saveLocalRecord(backendUser.id, { startDate, notifications, progress, photos: local.photos });
+
+  return merged;
 }
 
 function saveUserLocalPart(user: AppUser) {
@@ -145,6 +167,7 @@ export function resetChallenge(user: AppUser): AppUser {
 export function updateNotifications(user: AppUser, notifications: AppUser["notifications"]): AppUser {
   const updated = { ...user, notifications };
   saveUserLocalPart(updated);
+  syncToServer(updated);
   return updated;
 }
 
@@ -166,9 +189,12 @@ export function computeTotalCompleted(user: AppUser): number {
   return Object.values(user.progress).filter((r) => r.status === "completed").length;
 }
 
-// Mirrors a lightweight progress summary to the backend, purely for the
-// admin dashboard. Fire-and-forget — never awaited, never blocks the UI.
-function syncToServer(user: AppUser) {
+// Pushes the full progress state to the backend — this is what makes
+// progress follow a person across devices, not just a nice-to-have for the
+// admin dashboard. Fire-and-forget — never awaited, never blocks the UI. If
+// it fails, the local copy still has everything; the next successful sync
+// will catch the server back up.
+export function syncToServer(user: AppUser) {
   const token = getToken();
   if (!token) return;
   const currentDay = getCurrentDay(user);
@@ -177,6 +203,9 @@ function syncToServer(user: AppUser) {
     .map(([day]) => Number(day));
   const lastCompletedDay = completedDays.length ? Math.max(...completedDays) : null;
   syncProgress(token, {
+    progress: user.progress,
+    startDate: user.startDate,
+    notifications: user.notifications,
     currentDay,
     totalCompleted: computeTotalCompleted(user),
     streak: computeStreak(user),

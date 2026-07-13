@@ -1,6 +1,6 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-import type { FitnessLevel, Goal } from "../types";
+import type { FitnessLevel, Goal, ProgressRecord } from "../types";
 
 export interface BackendUser {
   id: string;
@@ -10,6 +10,17 @@ export interface BackendUser {
   goal: Goal;
   paid: boolean;
   createdAt: string;
+  // Present once at least one sync has happened — the server-side source of
+  // truth for cross-device progress. Absent (undefined) for brand new
+  // accounts or accounts created before this synced, in which case the
+  // browser's local copy is used instead until the next sync.
+  progress?: ProgressRecord;
+  startDate?: string;
+  notifications?: {
+    dailyReminder: boolean;
+    weeklyMilestone: boolean;
+    streakAlerts: boolean;
+  };
 }
 
 interface AuthResponse {
@@ -80,20 +91,31 @@ export function updateProfile(token: string, updates: { fitnessLevel?: string; g
   });
 }
 
-// Fire-and-forget progress summary sync, purely so the admin dashboard has
-// real numbers to show. Never awaited by the UI and never blocks a person's
-// own experience of the app if it fails.
+// Pushes the full progress state (day-by-day record, start date,
+// notification prefs) plus the summary numbers the admin dashboard shows.
+// Fire-and-forget from the UI's perspective — never awaited, never blocks a
+// person's own experience of the app if it fails.
 export function syncProgress(
   token: string,
-  summary: { currentDay: number; totalCompleted: number; streak: number; lastCompletedDay: number | null }
+  payload: {
+    progress: ProgressRecord;
+    startDate: string;
+    notifications: { dailyReminder: boolean; weeklyMilestone: boolean; streakAlerts: boolean };
+    currentDay: number;
+    totalCompleted: number;
+    streak: number;
+    lastCompletedDay: number | null;
+  }
 ) {
-  return request("/api/progress", {
+  return request<{ ok: true; user: BackendUser }>("/api/progress", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify(summary),
+    body: JSON.stringify(payload),
   }).catch(() => {
-    // Silently ignore — this is a nice-to-have for the admin view, not
-    // something that should ever interrupt the person using the app.
+    // Silently ignore — a failed sync shouldn't interrupt the person using
+    // the app. Local storage still has their data; the next successful
+    // action will retry the push.
+    return undefined;
   });
 }
 
