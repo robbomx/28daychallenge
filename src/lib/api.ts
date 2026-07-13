@@ -91,11 +91,18 @@ export function updateProfile(token: string, updates: { fitnessLevel?: string; g
   });
 }
 
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 // Pushes the full progress state (day-by-day record, start date,
 // notification prefs) plus the summary numbers the admin dashboard shows.
-// Fire-and-forget from the UI's perspective — never awaited, never blocks a
-// person's own experience of the app if it fails.
-export function syncProgress(
+// Retries a few times with backoff before giving up — the free-tier backend
+// can take 30-50s to wake from sleep, and a single failed attempt here
+// otherwise means real progress silently never reaches the server. Still
+// fire-and-forget from the UI's perspective: never awaited, never blocks a
+// person's own experience of the app.
+export async function syncProgress(
   token: string,
   payload: {
     progress: ProgressRecord;
@@ -107,16 +114,25 @@ export function syncProgress(
     lastCompletedDay: number | null;
   }
 ) {
-  return request<{ ok: true; user: BackendUser }>("/api/progress", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify(payload),
-  }).catch(() => {
-    // Silently ignore — a failed sync shouldn't interrupt the person using
-    // the app. Local storage still has their data; the next successful
-    // action will retry the push.
-    return undefined;
-  });
+  const attemptDelays = [0, 4000, 10000]; // immediate, then 4s, then 10s later
+  for (let i = 0; i < attemptDelays.length; i++) {
+    if (attemptDelays[i] > 0) await delay(attemptDelays[i]);
+    try {
+      return await request<{ ok: true; user: BackendUser }>("/api/progress", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      if (i === attemptDelays.length - 1) {
+        // Final attempt failed too. Local storage still has the real data —
+        // the next time this account merges (next login, next completed
+        // day, etc.) will try pushing again with the full current state.
+        return undefined;
+      }
+      // otherwise fall through and retry after the next delay
+    }
+  }
 }
 
 export interface AdminUserRow extends BackendUser {
