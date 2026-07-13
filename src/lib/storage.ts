@@ -1,4 +1,4 @@
-import type { AppUser, DailyChecklistState, LocalUserRecord, PhotoRecord } from "../types";
+import type { AppUser, DailyChecklistState, LocalUserRecord, PhotoRecord, ProgressRecord } from "../types";
 import type { BackendUser } from "./api";
 import { syncProgress } from "./api";
 
@@ -69,17 +69,59 @@ function saveLocalRecord(userId: string, record: LocalUserRecord) {
   writeAllLocalRecords(records);
 }
 
+// Combines two progress records (e.g. one from the server, one from a
+// browser's local cache) without losing data from either side — this
+// matters because two devices can each have real, different completed days
+// if someone used the app before cross-device sync existed, or if a sync
+// request ever failed silently. For any day recorded in both, a completed
+// entry wins over a non-completed one; if both are completed, the one with
+// the later completedAt timestamp wins.
+function mergeProgressRecords(a: ProgressRecord, b: ProgressRecord): ProgressRecord {
+  const dayNumbers = new Set([...Object.keys(a), ...Object.keys(b)].map(Number));
+  const merged: ProgressRecord = {};
+  dayNumbers.forEach((day) => {
+    const ra = a[day];
+    const rb = b[day];
+    if (!ra) {
+      merged[day] = rb;
+      return;
+    }
+    if (!rb) {
+      merged[day] = ra;
+      return;
+    }
+    if (ra.status === "completed" && rb.status !== "completed") {
+      merged[day] = ra;
+      return;
+    }
+    if (rb.status === "completed" && ra.status !== "completed") {
+      merged[day] = rb;
+      return;
+    }
+    const aTime = ra.completedAt ? new Date(ra.completedAt).getTime() : 0;
+    const bTime = rb.completedAt ? new Date(rb.completedAt).getTime() : 0;
+    merged[day] = bTime > aTime ? rb : ra;
+  });
+  return merged;
+}
+
+// The true start of someone's challenge shouldn't move later just because a
+// device that never recorded a start date synced after one that did — always
+// prefer the earlier of the two if both exist.
+function earlierDate(a?: string, b?: string): string | undefined {
+  if (!a) return b;
+  if (!b) return a;
+  return new Date(a).getTime() <= new Date(b).getTime() ? a : b;
+}
+
 export function mergeUser(backendUser: BackendUser): AppUser {
   const local = getLocalRecord(backendUser.id, backendUser.createdAt);
 
-  // The server becomes the source of truth for progress/startDate/notifications
-  // once it has any (i.e. after at least one sync from any device). This is
-  // what makes "complete Day 1 on your phone, check the tracker on your
-  // laptop" actually work. Brand new accounts, or accounts that predate this
-  // sync existing, fall back to whatever's in this browser's local copy.
-  const progress = backendUser.progress !== undefined ? backendUser.progress : local.progress;
-  const startDate = backendUser.startDate !== undefined ? backendUser.startDate : local.startDate;
-  const notifications = backendUser.notifications !== undefined ? backendUser.notifications : local.notifications;
+  // Reconcile rather than pick one side — this is what makes it safe
+  // regardless of which device (phone or desktop) happens to sync first.
+  const progress = mergeProgressRecords(backendUser.progress ?? {}, local.progress ?? {});
+  const startDate = earlierDate(backendUser.startDate, local.startDate) ?? backendUser.createdAt;
+  const notifications = backendUser.notifications ?? local.notifications;
 
   const merged: AppUser = {
     ...backendUser,
