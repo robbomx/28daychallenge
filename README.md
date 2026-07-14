@@ -43,6 +43,24 @@ This runs on `http://localhost:5173` and talks to the backend at `http://localho
 
 At this point signup/login work for real, but nobody can pay yet until Stripe is connected (next section) — the Pricing page will show "Preparing checkout…" until `PAYMENT_LINK_BASE_URL` is set on the server.
 
+## Connecting Meta Pixel (ad conversion tracking)
+
+1. Go to Meta Events Manager → your Pixel → Settings, and copy your Pixel ID
+2. Set `VITE_META_PIXEL_ID` to that value in your frontend host's environment variables (Netlify), then rebuild
+3. Leave it unset and the site works exactly the same, just without the pixel loading at all — no errors either way
+
+**Events currently tracked** (fire automatically, no further setup needed once the Pixel ID above is set):
+
+| Event | Fires when |
+|---|---|
+| `PageView` | Every page load (standard pixel behavior) |
+| `Lead` | Any "Start My 28 Day Challenge" / "Join The 28 Day Standard" button is clicked, before signup |
+| `CompleteRegistration` | Account creation succeeds |
+| `InitiateCheckout` | The personalized Stripe checkout link is ready on the Pricing page |
+| `Purchase` | First dashboard load after `paid` becomes true (tracked once per account via a local flag, so revisiting the dashboard doesn't re-fire it) |
+
+Note: `Purchase` fires based on our own `paid` flag, not a Stripe-side webhook-to-pixel bridge — it's accurate to what our system knows, but if you want server-side (Conversions API) tracking for better ad platform accuracy, that's a separate, larger integration.
+
 ## Connecting Stripe (real payments)
 
 1. **Create the product & price** — Stripe Dashboard → Product catalog → + Add product → name it "The 28 Day Standard", price **$39.00**, set to **One time** (not recurring).

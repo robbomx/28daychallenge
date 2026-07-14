@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Button from "./Button";
+import { trackEvent } from "../lib/pixel";
 
 const BRAND = "The 28 Day Standard";
 
@@ -83,9 +84,9 @@ export default function Navbar() {
                   Log In
                 </Button>
               </Link>
-              <Link to="/pricing">
+              <Link to="/signup" onClick={() => trackEvent("Lead", { content_name: "nav_cta" })}>
                 <Button variant="primary" size="sm">
-                  Start the Challenge
+                  Start My Challenge
                 </Button>
               </Link>
             </>
@@ -133,9 +134,9 @@ export default function Navbar() {
               <Link to="/pricing" onClick={() => setOpen(false)} className="mono-label text-xs px-2 py-3 border-b border-op-line text-op-off-white-dim">
                 Pricing
               </Link>
-              <Link to="/pricing" onClick={() => setOpen(false)} className="mt-3">
+              <Link to="/signup" onClick={() => { setOpen(false); trackEvent("Lead", { content_name: "mobile_nav_cta" }); }} className="mt-3">
                 <Button variant="primary" fullWidth>
-                  Start the Challenge
+                  Start My Challenge
                 </Button>
               </Link>
             </>

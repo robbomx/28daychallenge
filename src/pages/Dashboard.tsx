@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { computeStreak, computeTotalCompleted, getCurrentDay } from "../lib/storage";
@@ -8,6 +9,7 @@ import WorkoutCard from "../components/WorkoutCard";
 import DailyChecklist from "../components/DailyChecklist";
 import Badge from "../components/Badge";
 import type { DailyChecklistState } from "../types";
+import { hasTrackedPurchase, markPurchaseTracked, trackEvent } from "../lib/pixel";
 
 const emptyChecklist: DailyChecklistState = {
   workoutCompleted: false,
@@ -15,6 +17,14 @@ const emptyChecklist: DailyChecklistState = {
 
 export default function Dashboard() {
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user || !user.paid) return;
+    if (hasTrackedPurchase(user.id)) return;
+    trackEvent("Purchase", { value: 39, currency: "AUD" });
+    markPurchaseTracked(user.id);
+  }, [user]);
+
   if (!user) return null;
 
   const currentDay = getCurrentDay(user);

@@ -7,6 +7,7 @@ import { useAuth } from "../context/AuthContext";
 import { getCheckoutLink } from "../lib/api";
 import { getToken } from "../lib/storage";
 import { stripeConfig } from "../config/stripe";
+import { trackEvent } from "../lib/pixel";
 
 const included = [
   "28 daily workouts, scaled to your fitness level",
@@ -20,15 +21,20 @@ export default function Pricing() {
   const { user } = useAuth();
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [linkError, setLinkError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (!user || user.paid) return;
     const token = getToken();
     if (!token) return;
+    setLinkError(null);
     getCheckoutLink(token)
-      .then(({ url }) => setCheckoutUrl(url))
+      .then(({ url }) => {
+        setCheckoutUrl(url);
+        trackEvent("InitiateCheckout", { value: 39, currency: "AUD" });
+      })
       .catch((err) => setLinkError(err instanceof Error ? err.message : "Couldn't reach checkout."));
-  }, [user]);
+  }, [user, retryCount]);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
@@ -90,7 +96,12 @@ export default function Pricing() {
               </p>
             </>
           ) : linkError ? (
-            <p className="text-sm text-op-error">{linkError}</p>
+            <>
+              <p className="text-sm text-op-error">{linkError}</p>
+              <Button variant="secondary" fullWidth onClick={() => setRetryCount((c) => c + 1)}>
+                Try Again
+              </Button>
+            </>
           ) : checkoutUrl ? (
             <a href={checkoutUrl} target="_blank" rel="noopener noreferrer">
               <Button variant="primary" size="lg" fullWidth>

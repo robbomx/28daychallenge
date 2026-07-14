@@ -5,6 +5,7 @@ import Button from "../components/Button";
 import { Field, SelectField } from "../components/AuthForm";
 import { useAuth } from "../context/AuthContext";
 import type { FitnessLevel, Goal } from "../types";
+import { trackEvent } from "../lib/pixel";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -49,6 +50,7 @@ export default function Signup() {
     setSubmitting(true);
     try {
       const user = await signup({ firstName: firstName.trim(), email: email.trim(), password, fitnessLevel, goal });
+      trackEvent("CompleteRegistration");
       navigate(user.paid ? "/dashboard" : "/pricing");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Try again.");

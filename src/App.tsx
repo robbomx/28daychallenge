@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -17,8 +18,13 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import { initPixel } from "./lib/pixel";
 
 export default function App() {
+  useEffect(() => {
+    initPixel();
+  }, []);
+
   return (
     <AuthProvider>
       <BrowserRouter>
